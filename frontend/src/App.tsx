@@ -5,6 +5,8 @@ import { ProtectedRoute, AdminRoute } from '@/routes/index'
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
 import History from '@/pages/History'
+import DeviceSettings from '@/pages/Settings/DeviceSettings'
+import UserManagement from '@/pages/Settings/UserManagement'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,18 +16,6 @@ const queryClient = new QueryClient({
     },
   },
 })
-
-// ── 占位页面（Phase 9-10 会替换） ─────────────────────────────────────────────
-
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <p className="font-display text-sm tracking-widest text-text-secondary uppercase">
-        {title} — Coming Soon
-      </p>
-    </div>
-  )
-}
 
 // ── 路由配置 ──────────────────────────────────────────────────────────────────
 
@@ -42,11 +32,11 @@ export default function App() {
             <Route element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="history" element={<History />} />
-              <Route path="settings" element={<PlaceholderPage title="系统设置" />} />
+              <Route path="settings" element={<DeviceSettings />} />
 
               {/* 需要管理员 */}
               <Route element={<AdminRoute />}>
-                <Route path="users" element={<PlaceholderPage title="用户管理" />} />
+                <Route path="users" element={<UserManagement />} />
               </Route>
             </Route>
           </Route>
