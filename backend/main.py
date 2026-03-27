@@ -3,6 +3,13 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
+# 配置根 logger，确保自定义模块日志（TCPServer/InferenceLoop等）可见
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+    datefmt="%H:%M:%S",
+)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

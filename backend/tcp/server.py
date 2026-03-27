@@ -104,8 +104,11 @@ class TCPServer:
         if device_id is None:
             await self._write_log("warning", f"未知设备尝试连接（IP: {remote_ip}），已拒绝")
             logger.warning(f"[TCPServer] unknown device {remote_ip}, closing")
+            print(f"[TCPServer] ✗ unknown device IP={remote_ip}, connection rejected", flush=True)
             writer.close()
             return
+
+        print(f"[TCPServer] ✓ device_id={device_id} IP={remote_ip} connected", flush=True)
 
         connected_at = datetime.now(timezone.utc).replace(tzinfo=None)
         frames_received = 0
@@ -148,6 +151,8 @@ class TCPServer:
 
                 elif frame_type == FrameType.IMAGE:
                     frames_received += 1
+                    if frames_received == 1:
+                        print(f"[TCPServer] ✓ first frame received device_id={device_id}", flush=True)
                     if ctx is None:
                         continue
 

@@ -73,10 +73,13 @@ async def ws_stream(
     帧数据由 ws_push_loop 通过 ws_manager.broadcast_stream() 广播，
     本路由只负责：鉴权握手、ping/pong 心跳、token_expiring 通知。
     """
+    print(f"[WS] /ws/stream/{device_id} 连接请求 token={'有' if token else '无'}", flush=True)
     payload = _verify_ws_token(token)
     if not payload:
+        print(f"[WS] /ws/stream/{device_id} 4401 token验证失败", flush=True)
         await websocket.close(code=4401)
         return
+    print(f"[WS] /ws/stream/{device_id} 已接入 user={payload.get('username')}", flush=True)
 
     await ws_manager.connect_stream(device_id, websocket)
 

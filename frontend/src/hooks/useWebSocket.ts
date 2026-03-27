@@ -62,7 +62,9 @@ export function useWebSocket({
   }, [])
 
   const connect = useCallback(() => {
-    if (!mountedRef.current || !url || !enabled) return
+    // mountedRef 在 StrictMode 双挂载时可能为 false，需重置
+    mountedRef.current = true
+    if (!url || !enabled) return
 
     // 关闭旧连接（不触发 onclose 处理器）
     if (wsRef.current) {

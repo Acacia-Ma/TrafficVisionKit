@@ -101,7 +101,7 @@ export function useStreamSocket(deviceId: number): UseStreamSocketReturn {
           authApi
             .refresh()
             .then((data) => {
-              setTokens(data.access_token, data.user)
+              setTokens(data.access_token, data.refresh_token, data.user)
               setActiveToken(data.access_token)
             })
             .catch(() => {
@@ -123,7 +123,7 @@ export function useStreamSocket(deviceId: number): UseStreamSocketReturn {
       // Token 过期：静默刷新
       try {
         const data = await authApi.refresh()
-        setTokens(data.access_token, data.user)
+        setTokens(data.access_token, data.refresh_token, data.user)
         setActiveToken(data.access_token)   // 触发 URL 变化 → useWebSocket 重连
       } catch {
         clearAuth()
