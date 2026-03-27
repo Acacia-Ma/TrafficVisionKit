@@ -30,8 +30,13 @@ interface UseStreamSocketReturn {
 
 export function useStreamSocket(deviceId: number): UseStreamSocketReturn {
   const navigate = useNavigate()
-  const { updateFrame, updateDetection, addAlert, resolveAlert, setDeviceOffline, resetDeviceState } =
-    useTrafficStore()
+  const {
+    updateFrameAndDetection,
+    addAlert,
+    resolveAlert,
+    setDeviceOffline,
+    resetDeviceState,
+  } = useTrafficStore()
   const { setTokens, clearAuth } = useAuthStore()
 
   // 当前连接使用的 Token（刷新后更新以触发 URL 重算）
@@ -64,8 +69,13 @@ export function useStreamSocket(deviceId: number): UseStreamSocketReturn {
       switch (msg.type) {
         case 'stream_frame': {
           const m = msg as StreamFrameMsg
-          updateFrame(m.frame.data, m.frame.width, m.frame.height)
-          updateDetection(m.detection)
+          // 帧图像 + 检测数据合并为一次 store 更新，避免双倍渲染
+          updateFrameAndDetection(
+            m.frame.data,
+            m.frame.width,
+            m.frame.height,
+            m.detection,
+          )
           break
         }
         case 'alert_event': {
@@ -103,7 +113,7 @@ export function useStreamSocket(deviceId: number): UseStreamSocketReturn {
           break
       }
     },
-    [updateFrame, updateDetection, addAlert, resolveAlert, setDeviceOffline, setTokens]
+    [updateFrameAndDetection, addAlert, resolveAlert, setDeviceOffline, setTokens]
   )
 
   const handleClose = useCallback(

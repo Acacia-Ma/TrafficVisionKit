@@ -76,18 +76,27 @@ def get_client_ip(request: Request) -> str:
 ClientIP = Annotated[str, Depends(get_client_ip)]
 
 
-# ── Refresh Token Cookie 依赖 ───────────────────────────────────────────────────
+# ── Refresh Token 依赖（支持 Cookie 或 Header）───────────────────────────────────
 
-async def get_refresh_token_from_cookie(
+async def get_refresh_token_from_cookie_or_header(
+    request: Request,
     refresh_token: Annotated[str | None, Cookie(alias="refresh_token")] = None,
-) -> str:
-    """从 HttpOnly Cookie 中读取 refresh_token，不存在则返回 401。"""
-    if not refresh_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"code": 1004, "message": "refresh_token 缺失"},
-        )
-    return refresh_token
+) -> str | None:
+    """从 HttpOnly Cookie 或 X-Refresh-Token Header 中读取 refresh_token。
+    优先级：Header > Cookie
+    不存在时返回 None（由端点处理）
+    """
+    # 优先从 Header 读取（前端备选方案）
+    token_from_header = request.headers.get("X-Refresh-Token")
+    if token_from_header:
+        return token_from_header
+    
+    # 其次从 Cookie 读取（标准方案）
+    if refresh_token:
+        return refresh_token
+    
+    # 返回 None，让端点决定如何处理
+    return None
 
 
-RefreshTokenCookie = Annotated[str, Depends(get_refresh_token_from_cookie)]
+RefreshTokenCookie = Annotated[str | None, Depends(get_refresh_token_from_cookie_or_header)]

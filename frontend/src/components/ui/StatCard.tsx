@@ -10,7 +10,7 @@
  *   alertLevel   0=accent边框，1~5=对应预警色边框
  *   animateNumber 是否启用 Framer Motion 数字翻牌动画（仅 number 类型 value 生效）
  */
-import { useEffect } from 'react'
+import { memo, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { alertLevelColor } from '@/lib/utils'
 
@@ -42,7 +42,7 @@ function AnimatedNumber({ value, format }: { value: number; format?: (v: number)
   return <motion.span>{display}</motion.span>
 }
 
-export function StatCard({
+export const StatCard = memo(function StatCard({
   title,
   value,
   unit,
@@ -108,4 +108,4 @@ export function StatCard({
       )}
     </div>
   )
-}
+})

@@ -16,7 +16,7 @@ export function useAuth() {
   const login = useCallback(
     async (username: string, password: string) => {
       const data = await authApi.login({ username, password })
-      setTokens(data.access_token, data.user)
+      setTokens(data.access_token, data.refresh_token, data.user)
       navigate('/', { replace: true })
     },
     [setTokens, navigate]
@@ -35,7 +35,7 @@ export function useAuth() {
   }, [clearAuth, navigate])
 
   /**
-   * 静默刷新：用 HttpOnly Cookie 中的 refresh_token 换取新 access_token。
+   * 静默刷新：用 HttpOnly Cookie 中的 refresh_token 或 localStorage 中的备份 token 换取新 access_token。
    * 返回 true 表示刷新成功，false 表示失败（用户需要重新登录）。
    * 在以下场景调用：
    *   1. App 初始化（页面刷新后恢复登录状态）
@@ -43,10 +43,13 @@ export function useAuth() {
    */
   const refreshToken = useCallback(async (): Promise<boolean> => {
     try {
+      console.log('[useAuth] Attempting token refresh...')
       const data = await authApi.refresh()
-      setTokens(data.access_token, data.user)
+      console.log('[useAuth] Token refresh successful')
+      setTokens(data.access_token, data.refresh_token, data.user)
       return true
-    } catch {
+    } catch (err) {
+      console.log('[useAuth] Token refresh failed:', err)
       clearAuth()
       return false
     }

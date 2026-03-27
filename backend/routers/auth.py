@@ -93,6 +93,7 @@ async def login(
 
     access_token = create_access_token(user.id, user.username, user.role)
     refresh_token, _jti = create_refresh_token(user.id)
+    print(f"[LOGIN] User {body.username} logged in. Refresh token created.")
 
     # 更新最后登录时间
     user.last_login_at = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -113,12 +114,14 @@ async def login(
         samesite="strict",
         domain=settings.COOKIE_DOMAIN or None,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
-        path="/api/auth/refresh",
+        path="/api/auth",
     )
 
     return TokenResponse(
         access_token=access_token,
+        refresh_token=refresh_token,
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=user,
     )
 
 
@@ -129,9 +132,19 @@ async def refresh(
     refresh_token: RefreshTokenCookie,
 ) -> TokenResponse:
     settings = get_settings()
+    
+    print(f"[REFRESH] Attempting refresh. Token present: {bool(refresh_token)}")
+
+    if not refresh_token:
+        print(f"[REFRESH] ERROR: No refresh_token provided")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": 1004, "message": "refresh_token 缺失"},
+        )
 
     payload = decode_refresh_token(refresh_token)
     if payload is None:
+        print(f"[REFRESH] ERROR: Failed to decode refresh_token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"code": 1005, "message": "refresh_token 无效或已过期"},
@@ -179,12 +192,14 @@ async def refresh(
         samesite="strict",
         domain=settings.COOKIE_DOMAIN or None,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
-        path="/api/auth/refresh",
+        path="/api/auth",
     )
 
     return TokenResponse(
         access_token=new_access,
+        refresh_token=new_refresh,
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=user,
     )
 
 
@@ -201,7 +216,7 @@ async def logout(
             exp = dt.fromtimestamp(payload["exp"], tz=timezone.utc)
             blacklist_refresh_token(payload["jti"], exp)
 
-    response.delete_cookie(key="refresh_token", path="/api/auth/refresh")
+    response.delete_cookie(key="refresh_token", path="/api/auth")
 
 
 @router.get("/me", response_model=MeResponse, summary="获取当前用户信息")

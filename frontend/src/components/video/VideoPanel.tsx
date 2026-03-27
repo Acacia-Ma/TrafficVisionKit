@@ -8,6 +8,7 @@
  *   - dropped_frames > 10 时顶部显示「帧率降级」警告标签
  *   - 包含 ScanlineOverlay 和 CountingLineOverlay
  */
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { useTrafficStore } from '@/store/useTrafficStore'
 import { alertLevelColor } from '@/lib/utils'
@@ -20,7 +21,7 @@ interface VideoPanelProps {
   droppedFrames?: number
 }
 
-export function VideoPanel({
+export const VideoPanel = memo(function VideoPanel({
   isConnected,
   alertLevel,
   droppedFrames = 0,
@@ -108,4 +109,4 @@ export function VideoPanel({
       )}
     </div>
   )
-}
+})

@@ -41,22 +41,38 @@ export default function Login() {
   const [lockMinutes, setLockMinutes] = useState<number | null>(null)
 
   const usernameRef = useRef<HTMLInputElement>(null)
+  const hasInitialized = useRef(false)
 
   // App 初始化时静默刷新 Token（页面刷新后恢复登录状态）
   useEffect(() => {
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+    
+    console.log('[Login] Starting initialization: attempting token refresh')
     refreshToken()
       .then((ok) => {
-        if (ok) navigate(from, { replace: true })
+        console.log(`[Login] Token refresh result: ${ok ? 'success' : 'failed'}`)
+        if (ok) {
+          console.log('[Login] Redirecting to dashboard')
+          navigate(from, { replace: true })
+        }
       })
-      .finally(() => setInitDone(true))
+      .finally(() => {
+        console.log('[Login] Initialization complete')
+        setInitDone(true)
+      })
   // 仅执行一次
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // 若已登录（刷新成功），跳转
   useEffect(() => {
-    if (isAuthenticated && initDone) navigate(from, { replace: true })
-  }, [isAuthenticated, initDone, navigate, from])
+    if (isAuthenticated && initDone) {
+      navigate(from, { replace: true })
+    }
+  // 仅在 isAuthenticated 从 false 变为 true 时执行一次
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated])
 
   useEffect(() => {
     if (initDone) usernameRef.current?.focus()
@@ -66,7 +82,10 @@ export default function Login() {
     e.preventDefault()
     setError(null)
     setLockMinutes(null)
-    if (!username.trim() || !password) return
+    if (!username.trim() || !password) {
+      setError('请输入用户名和密码')
+      return
+    }
 
     setLoading(true)
     try {
@@ -153,7 +172,7 @@ export default function Login() {
               ref={usernameRef}
               id="username"
               type="text"
-              autoComplete="username"
+              autoComplete="off"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
@@ -180,7 +199,7 @@ export default function Login() {
             <input
               id="password"
               type="password"
-              autoComplete="current-password"
+              autoComplete="off"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}

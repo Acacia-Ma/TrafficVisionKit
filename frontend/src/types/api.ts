@@ -14,12 +14,14 @@ export interface UserInfo {
   role: 'admin' | 'operator'
   email: string | null
   is_active: boolean
-  last_login_at: string | null
+  last_login_at?: string | null
 }
 
 export interface TokenResponse {
   access_token: string
-  token_type: string
+  refresh_token?: string | null
+  token_type?: string
+  expires_in?: number
   user: UserInfo
 }
 

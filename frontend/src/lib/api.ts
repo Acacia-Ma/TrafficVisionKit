@@ -62,6 +62,15 @@ apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config as typeof error.config & { _retry?: boolean }
+    const isRefreshUrl = original.url?.includes('/api/auth/refresh')
+    
+    // 如果是 401 且已经在 refresh 路由本身，直接返回错误（避免无限循环）
+    if (error.response?.status === 401 && isRefreshUrl) {
+      useAuthStore.getState().clearAuth()
+      return Promise.reject(error)
+    }
+    
+    // 如果不是 401 或已经重试过，直接返回错误
     if (error.response?.status !== 401 || original._retry) {
       return Promise.reject(error)
     }
@@ -79,12 +88,18 @@ apiClient.interceptors.response.use(
     _refreshing = true
 
     try {
+      // 尝试从备份中读取 refresh token（用于通过 Header 发送）
+      const refreshTokenBackup = localStorage.getItem('refresh_token_backup')
+      
       const { data } = await axios.post<TokenResponse>(
         `${API_BASE}/api/auth/refresh`,
         {},
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: refreshTokenBackup ? { 'X-Refresh-Token': refreshTokenBackup } : {},
+        }
       )
-      useAuthStore.getState().setTokens(data.access_token, data.user)
+      useAuthStore.getState().setTokens(data.access_token, data.refresh_token || refreshTokenBackup, data.user)
       flushQueue(null, data.access_token)
       original.headers.Authorization = `Bearer ${data.access_token}`
       return apiClient(original)
