@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     TCP_HOST: str = "0.0.0.0"
     TCP_PORT: int = 9000
 
+    # ── UDP 视频接收（STM32 MC5640 JPEG 流）─────────────────────
+    UDP_HOST: str = "0.0.0.0"
+    UDP_PORT: int = 8080
+
     # ── FastAPI 服务 ──────────────────────────────────────────────
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000

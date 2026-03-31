@@ -15,8 +15,8 @@ import type { VehicleDetection } from '@/types/websocket'
 // ── 内部画布分辨率（与视频源 640×480 的缩放比为 0.5）─────────────────────────
 export const CANVAS_W = 320
 export const CANVAS_H = 240
-const SRC_W = 640
-const SRC_H = 480
+const DEFAULT_SRC_W = 640
+const DEFAULT_SRC_H = 480
 
 // ── 颜色常量 ──────────────────────────────────────────────────────────────────
 const COLOR_NORMAL   = '#00f0ff'
@@ -56,7 +56,7 @@ interface Props {
 export function TrajectoryCanvas({
   lineY,
   roiX1 = 0, roiY1 = 0,
-  roiX2 = SRC_W, roiY2 = SRC_H,
+  roiX2, roiY2,
   className = 'w-full aspect-[4/3]',
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -65,19 +65,25 @@ export function TrajectoryCanvas({
 
   const trackHistoryMap    = useTrafficStore((s) => s.trackHistoryMap)
   const vehicles           = useTrafficStore((s) => s.vehicles)
+  const frameWidth         = useTrafficStore((s) => s.frameWidth)
+  const frameHeight        = useTrafficStore((s) => s.frameHeight)
   const highlightedTrackId = useTrafficStore((s) => s.highlightedTrackId)
   const setHighlighted     = useTrafficStore((s) => s.setHighlightedTrackId)
 
-  const scaleX = CANVAS_W / SRC_W   // 0.5
-  const scaleY = CANVAS_H / SRC_H   // 0.5
+  const srcW = frameWidth > 0 ? frameWidth : DEFAULT_SRC_W
+  const srcH = frameHeight > 0 ? frameHeight : DEFAULT_SRC_H
+  const scaleX = CANVAS_W / srcW
+  const scaleY = CANVAS_H / srcH
 
   // 画布空间坐标（计数线 + ROI）
   const canvasLineY = lineY * scaleY
+  const roiRight = roiX2 ?? srcW
+  const roiBottom = roiY2 ?? srcH
   const canvasRoi = {
     x: roiX1 * scaleX,
     y: roiY1 * scaleY,
-    w: (roiX2 - roiX1) * scaleX,
-    h: (roiY2 - roiY1) * scaleY,
+    w: (roiRight - roiX1) * scaleX,
+    h: (roiBottom - roiY1) * scaleY,
   }
 
   // 构建 vehicle 查找 Map

@@ -100,13 +100,18 @@ const initialDeviceState = {
 // 画布尺寸（与 TrajectoryCanvas 保持一致）
 const CANVAS_W = 320
 const CANVAS_H = 240
-const SRC_W = 640
-const SRC_H = 480
 
-function toCanvasCoords(px: number, py: number): { cx: number; cy: number } {
+function toCanvasCoords(
+  px: number,
+  py: number,
+  srcW: number,
+  srcH: number,
+): { cx: number; cy: number } {
+  const safeW = srcW > 0 ? srcW : 640
+  const safeH = srcH > 0 ? srcH : 480
   return {
-    cx: (px / SRC_W) * CANVAS_W,
-    cy: (py / SRC_H) * CANVAS_H,
+    cx: (px / safeW) * CANVAS_W,
+    cy: (py / safeH) * CANVAS_H,
   }
 }
 
@@ -139,12 +144,14 @@ function buildDetectionFields(
   // 更新轨迹历史 Map
   const newMap = new Map(currentTrackMap)
   const activeIds = new Set<number>()
+  const srcW = data.frame_width > 0 ? data.frame_width : 640
+  const srcH = data.frame_height > 0 ? data.frame_height : 480
   for (const v of data.vehicles ?? []) {
     if (v.tracking_id < 0) continue
     activeIds.add(v.tracking_id)
     const cx_src = (v.bbox[0] + v.bbox[2]) / 2
     const cy_src = (v.bbox[1] + v.bbox[3]) / 2
-    const { cx, cy } = toCanvasCoords(cx_src, cy_src)
+    const { cx, cy } = toCanvasCoords(cx_src, cy_src, srcW, srcH)
     const hist = newMap.get(v.tracking_id) ?? []
     const updated = [...hist, { cx, cy, ts: nowMs }]
     newMap.set(v.tracking_id, updated.slice(-TRACK_HISTORY_MAX_FRAMES))

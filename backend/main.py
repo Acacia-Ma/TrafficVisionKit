@@ -28,6 +28,7 @@ from services.aggregator import aggregator
 from services import cleanup
 from services import health_reporter
 from tcp.server import TCPServer
+from udp.receiver import UDPReceiver
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -35,6 +36,10 @@ settings = get_settings()
 # TCP Server 单例
 _tcp_server = TCPServer(host=settings.TCP_HOST, port=settings.TCP_PORT)
 _tcp_server.set_pipeline_manager(pipeline_manager)
+
+# UDP Server 单例（接收 STM32 MC5640 JPEG 分片流）
+_udp_receiver = UDPReceiver(host=settings.UDP_HOST, port=settings.UDP_PORT)
+_udp_receiver.set_pipeline_manager(pipeline_manager)
 
 
 @asynccontextmanager
@@ -53,6 +58,9 @@ async def lifespan(app: FastAPI):
 
     # 2. 启动 TCP Server
     await _tcp_server.start()
+
+    # 2b. 启动 UDP Video Receiver（STM32 MC5640 JPEG 分片流）
+    await _udp_receiver.start()
 
     # 3. 启动数据聚合定时协程（60s/3600s 写 traffic_records + hourly_statistics）
     aggregator.run()
@@ -82,7 +90,10 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
-    # 9. 停止 TCP Server
+    # 9. 停止 UDP Video Receiver
+    await _udp_receiver.stop()
+
+    # 10. 停止 TCP Server
     await _tcp_server.stop()
 
     logger.info("[Shutdown] done")
